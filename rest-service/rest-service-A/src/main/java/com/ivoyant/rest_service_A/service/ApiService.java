@@ -14,10 +14,13 @@ public class ApiService {
     @Autowired
     private RestTemplate restTemplate;
 
+
+    @Value("${service.b.url}")
+    private String baseUrl;
+
     public String getDataFromServiceB() {
-        String url = "http://localhost:8081/service-b/api/resource";
         try {
-            return restTemplate.getForObject(url, String.class);
+            return restTemplate.getForObject(baseUrl, String.class);
         } catch (RestClientException e) {
             log.error("Error fetching data from Service B: ", e);
             return "Error fetching data";
@@ -25,9 +28,8 @@ public class ApiService {
     }
 
     public String postDataToServiceB(Student data) {
-        String url = "http://localhost:8081/service-b/api/resource";
         try {
-            return restTemplate.postForObject(url, data, String.class);
+            return restTemplate.postForObject(baseUrl, data, String.class);
         } catch (RestClientException e) {
             log.error("Error posting data to Service B: ", e);
             return "Error posting data";
@@ -35,7 +37,7 @@ public class ApiService {
     }
 
     public void updateResourceOnServiceB(String resourceId, Student data) {
-        String url = "http://localhost:8081/service-b/api/resource/" + resourceId;
+        String url = baseUrl + "/" + resourceId;
         try {
             restTemplate.put(url, data);
         } catch (RestClientException e) {
@@ -44,7 +46,7 @@ public class ApiService {
     }
 
     public void deleteResourceFromServiceB(String resourceId) {
-        String url = "http://localhost:8081/service-b/api/resource/" + resourceId;
+        String url = baseUrl + "/" + resourceId;
         try {
             restTemplate.delete(url);
         } catch (RestClientException e) {
