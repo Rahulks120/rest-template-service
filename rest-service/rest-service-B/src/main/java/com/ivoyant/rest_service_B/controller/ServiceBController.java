@@ -1,5 +1,6 @@
 package com.ivoyant.rest_service_B.controller;
 
+import com.ivoyant.rest_service_B.exception.ResourceNotFoundException;
 import com.ivoyant.rest_service_B.service.StudentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,36 +24,45 @@ public class ServiceBController {
     @GetMapping("/service-b/api/resource")
     public ResponseEntity<List<Student>> getResource() {
         List<Student> allData = studentService.getAllStudents();
-        log.info("Data from Service B");
+        log.info("Data retrieved from Service B: {}", allData);
         return new ResponseEntity<>(allData, HttpStatus.OK);
     }
 
     @PostMapping("/service-b/api/resource")
-    public ResponseEntity<String> receiveData(@RequestBody Student data) {
+    public ResponseEntity<ErrorResponse> receiveData(@RequestBody Student data) {
+        if (data == null || data.getName() == null || data.getAge() == null) {
+            log.warn("Invalid data provided for creation.");
+            return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", "Invalid data provided."), HttpStatus.BAD_REQUEST);
+        }
         Student savedStudent = studentService.saveStudent(data);
-        return new ResponseEntity<>("Data received: " + savedStudent.getName() + ", " + savedStudent.getAge(), HttpStatus.CREATED);
+        log.info("Data received and saved: {}", savedStudent);
+        return new ResponseEntity<>(new ErrorResponse("SUCCESS", "Data received: " + savedStudent.getName() + ", " + savedStudent.getAge()), HttpStatus.CREATED);
     }
 
     @PutMapping("/service-b/api/resource/{id}")
-    public ResponseEntity<String> updateResource(@PathVariable Long id, @RequestBody Student data) {
+    public ResponseEntity<ErrorResponse> updateResource(@PathVariable Long id, @RequestBody Student data) {
+        if (data == null || data.getName() == null || data.getAge() == null) {
+            log.warn("Invalid data provided for update.");
+            return new ResponseEntity<>(new ErrorResponse("BAD_REQUEST", "Invalid data provided."), HttpStatus.BAD_REQUEST);
+        }
         Student updatedStudent = studentService.updateStudent(id, data);
         if (updatedStudent != null) {
-            log.info("Resource with ID {} has been Updated.", id);
-            return new ResponseEntity<>("Resource with ID " + id + " updated successfully", HttpStatus.OK);
+            log.info("Resource with ID {} has been updated.", id);
+            return new ResponseEntity<>(new ErrorResponse("SUCCESS", "Resource with ID " + id + " updated successfully"), HttpStatus.OK);
         } else {
             log.warn("Resource with ID {} not found.", id);
-            return new ResponseEntity<>("Resource with ID " + id + " not found", HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Resource with ID " + id + " not found");
         }
     }
 
     @DeleteMapping("/service-b/api/resource/{id}")
-    public ResponseEntity<String> deleteResource(@PathVariable Long id) {
+    public ResponseEntity<ErrorResponse> deleteResource(@PathVariable Long id) {
         if (studentService.deleteStudent(id)) {
             log.info("Resource with ID {} has been deleted.", id);
-            return new ResponseEntity<>("Resource with ID " + id + " deleted successfully", HttpStatus.OK);
+            return new ResponseEntity<>(new ErrorResponse("SUCCESS", "Resource with ID " + id + " deleted successfully"), HttpStatus.OK);
         } else {
             log.warn("Resource with ID {} not found.", id);
-            return new ResponseEntity<>("Resource with ID " + id + " not found", HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Resource with ID " + id + " not found");
         }
     }
 }
